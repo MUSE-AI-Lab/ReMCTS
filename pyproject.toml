@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "remcts"
+version = "0.1.0"
+description = "Reflection-enhanced Monte Carlo Tree Search for code generation"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+  {name = "Huifei Wang"},
+  {name = "Xinying Huang"},
+  {name = "Yiheng Sun"},
+  {name = "Yifan Yuan", email = "yifanyuan@szu.edu.cn"}
+]
+keywords = ["code generation", "large language models", "monte carlo tree search", "program repair"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence"
+]
+dependencies = [
+  "numpy>=1.26",
+  "PyYAML>=6.0",
+  "jsonlines>=4.0"
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.scripts]
+remcts-run-search = "remcts.cli.run_search:main"
+remcts-evaluate = "remcts.cli.evaluate:main"
+remcts-inspect-run = "remcts.cli.inspect_run:main"
+
+[tool.setuptools.package-data]
+remcts = ["config/*.yaml", "llm/templates/*.md"]
+
+[tool.setuptools.exclude-package-data]
+remcts = ["config/ballbox.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+pythonpath = ["src"]

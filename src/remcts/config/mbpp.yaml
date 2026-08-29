@@ -1,0 +1,30 @@
+search:
+  max_iterations: 80
+  branch_factor: 3
+  max_depth: 8
+  exploration_c: 1.3
+  path_memory_k: 4
+  global_memory_top_t: 3
+  success_threshold: 0.999
+  no_improve_patience: 16
+
+reward:
+  w_unit: 0.65
+  w_exec: 0.2
+  w_semantic: 0.15
+
+semantic:
+  alpha: 0.4
+  beta: 0.5
+
+sandbox:
+  timeout_sec: 4
+  max_output_chars: 4000
+
+llm:
+  model_name: mock
+  temperature: 0.2
+  max_tokens: 1024
+
+storage:
+  run_output_dir: outputs/runs

@@ -1,0 +1,65 @@
+search:
+  max_iterations: 4
+  branch_factor: 1
+  max_depth: 4
+  exploration_c: 1.4
+  path_memory_k: 4
+  global_memory_top_t: 2
+  success_threshold: 0.999
+  no_improve_patience: 3
+
+evaluation:
+  mode: production
+  oracle_policy: no_oracle
+
+reward:
+  w_unit: 0.0
+  w_exec: 0.0
+  w_semantic: 0.0
+  semantic_mode: llm
+  semantic_on_success: false
+  semantic_on_failure: true
+  semantic_max_feedback_chars: 3000
+
+reflection:
+  mode: llm
+  max_feedback_chars: 3000
+  fallback_on_error: true
+
+production:
+  w_proxy: 0.4
+  w_exec: 0.2
+  w_semantic: 0.3
+  w_risk: 0.1
+  accept_threshold: 0.62
+  proxy_threshold: 0.5
+  exec_threshold: 0.6
+  semantic_threshold: 0.45
+  risk_threshold: 0.25
+  gamma_uncertainty: 0.10
+  gamma_risk: 0.35
+  gamma_deviation: 0.10
+  probe_confidence: 0.45
+  contract_confidence: 0.75
+  static_confidence: 0.80
+  meta_confidence: 0.35
+
+semantic:
+  alpha: 0.4
+  beta: 0.6
+
+sandbox:
+  timeout_sec: 5
+  max_output_chars: 4000
+
+llm:
+  model_name: qwen3-8b
+  base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+  api_key_env: REMCTS_API_KEY
+  timeout_sec: 90
+  max_retries: 2
+  temperature: 0.2
+  max_tokens: 1024
+
+storage:
+  run_output_dir: outputs/runs

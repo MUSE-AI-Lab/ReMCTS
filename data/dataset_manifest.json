@@ -1,0 +1,177 @@
+{
+  "description": "Datasets prepared for ReMCTS Chapter 4 experiments.",
+  "generated": [
+    {
+      "bytes": 106247,
+      "path": "data/humaneval/HumanEval_feedback.jsonl",
+      "rows": 164,
+      "sha256": "75f639fed021764785f0a911ffeb5d7877c5fdc5fa19a0ec739f11a203ebdd72"
+    },
+    {
+      "bytes": 182991,
+      "path": "data/humaneval/HumanEval_eval.jsonl",
+      "rows": 164,
+      "sha256": "061bef1de4847f5b1025a1c1fcb90cd9b06ce22c28e88a93b427a8d63dfe3733"
+    },
+    {
+      "bytes": 96523,
+      "path": "data/humaneval/HumanEval_no_tests.jsonl",
+      "rows": 164,
+      "sha256": "3eaa3cc167f6c247a1eec333862770e048d5cb59f4f6a032335c355979d2d984"
+    },
+    {
+      "bytes": 552128,
+      "path": "data/mbpp/mbpp.json",
+      "rows": 974,
+      "sha256": "d6a93d5c5a6b2a050bd410661b336283fafcf02d7710f612e37e3345969b81b9"
+    },
+    {
+      "bytes": 453042,
+      "path": "data/mbpp/mbpp_feedback_split.json",
+      "rows": 974,
+      "sha256": "b95e5f93bed56ae491382decd66f9dc946a55e1ae793dcb1b408937696b97afe"
+    },
+    {
+      "bytes": 491378,
+      "path": "data/mbpp/mbpp_eval_split.json",
+      "rows": 974,
+      "sha256": "02b53f922fad8927cfe104041672f95044546da3b463ba1aeb1eb06e71e9f977"
+    },
+    {
+      "bytes": 370562,
+      "path": "data/mbpp/mbpp_no_tests.json",
+      "rows": 974,
+      "sha256": "98895360d3ae85db078387b25f80b327de926beca004a5366db04be4ddef1215"
+    },
+    {
+      "bytes": 286419,
+      "path": "data/mbpp/mbpp_test_11_510.json",
+      "rows": 500,
+      "sha256": "8840b40747fa16f157deda0388ba949bf1968ad96d6fe6608d1a5e0df84e6d80"
+    },
+    {
+      "bytes": 233956,
+      "path": "data/mbpp/mbpp_test_11_510_feedback_split.json",
+      "rows": 500,
+      "sha256": "717fee21191a7bc0fd4b5d06dbafa671151b27c6e1556df9f6acc447d2de5aa1"
+    },
+    {
+      "bytes": 253922,
+      "path": "data/mbpp/mbpp_test_11_510_eval_split.json",
+      "rows": 500,
+      "sha256": "257844f04a46d639b154b9fb0eeca35a6e7ab6f0856e2707937ad7bbb0a71c18"
+    },
+    {
+      "bytes": 190816,
+      "path": "data/mbpp/mbpp_test_11_510_no_tests.json",
+      "rows": 500,
+      "sha256": "39c9e2f2424bfaa0ea7997e20256e778b462bdc8f88282300cd123b9a1112c76"
+    },
+    {
+      "bytes": 241288,
+      "path": "data/mbpp/mbpp_sanitized.json",
+      "rows": 427,
+      "sha256": "226f50fd51fcf8ecd93619c111e98b0af3030ea7e999bd4c560e26510b8ac649"
+    },
+    {
+      "bytes": 195794,
+      "path": "data/mbpp/mbpp_sanitized_feedback_split.json",
+      "rows": 427,
+      "sha256": "087e12c78eedf746c3796508643ee9ab52f4eee072d1d8e6d4bab68c239d4733"
+    },
+    {
+      "bytes": 229177,
+      "path": "data/mbpp/mbpp_sanitized_eval_split.json",
+      "rows": 427,
+      "sha256": "b6d6cef7ce8e2b937744e20dcd2726a6f48445cdad2e2e165ce0eff9f8dc0087"
+    },
+    {
+      "bytes": 160779,
+      "path": "data/mbpp/mbpp_sanitized_no_tests.json",
+      "rows": 427,
+      "sha256": "e6ddaf9311deaa0d41894484203664d1e3b0091594b713cc394b5201319fe02c"
+    },
+    {
+      "bytes": 142423,
+      "path": "data/mbpp/mbpp_sanitized_test_11_510.json",
+      "rows": 257,
+      "sha256": "7c1cc647107100dbad886e7ffdd194d6b53f7defa0f8d343070b8b75c84dddcc"
+    },
+    {
+      "bytes": 115439,
+      "path": "data/mbpp/mbpp_sanitized_test_11_510_feedback_split.json",
+      "rows": 257,
+      "sha256": "4cc24352153226b9009d5829497e3eca7f5cc8486d42e0a80275a8593b198a27"
+    },
+    {
+      "bytes": 134790,
+      "path": "data/mbpp/mbpp_sanitized_test_11_510_eval_split.json",
+      "rows": 257,
+      "sha256": "4d41de424aa7349c0e368163f2ac779a618aed69bbd2e77427c597a1ee9e5cf6"
+    },
+    {
+      "bytes": 93912,
+      "path": "data/mbpp/mbpp_sanitized_test_11_510_no_tests.json",
+      "rows": 257,
+      "sha256": "0e0c662bf96667a1a2f88970885052ae4f432c0cc6891ba12ec45db1fde79262"
+    },
+    {
+      "bytes": 7714666,
+      "path": "data/evalplus/HumanEvalPlus.jsonl",
+      "rows": 164,
+      "sha256": "42526ec0e7d5f3ee0b06d6ced98f8c8bae3d76519151bfb3d36f79010645bd7f"
+    },
+    {
+      "bytes": 2592369,
+      "path": "data/evalplus/MbppPlus.jsonl",
+      "rows": 378,
+      "sha256": "b54e762755248ca411b523c917fa9f93c07b5ff2966bf60b3917b853926a3dad"
+    },
+    {
+      "bytes": 275813,
+      "path": "data/evalplus/MbppPlus_base_assertions.json",
+      "rows": 378,
+      "sha256": "4b6bb9ea1981de827367420e7b13f5c9786ccaf0857d2e618d476fc3b1d04060"
+    }
+  ],
+  "sources": [
+    {
+      "bytes": 44877,
+      "path": "data/humaneval/HumanEval.jsonl.gz",
+      "sha256": "b796127e635a67f93fb35c04f4cb03cf06f38c8072ee7cee8833d7bee06979ef",
+      "source_url": "https://raw.githubusercontent.com/openai/human-eval/master/data/HumanEval.jsonl.gz"
+    },
+    {
+      "bytes": 563743,
+      "path": "data/mbpp/mbpp.jsonl",
+      "sha256": "ccf64ceae9c5403bf50a044cb6d505bfd2a2963ee58338ba268fd65beab92a9f",
+      "source_url": "https://raw.githubusercontent.com/google-research/google-research/master/mbpp/mbpp.jsonl"
+    },
+    {
+      "bytes": 255053,
+      "path": "data/mbpp/sanitized-mbpp.json",
+      "sha256": "ca95deaa9a01ef0a6f439f88bcf0dd3db3563d22f22aad6cae04ebb9a8d8c8e9",
+      "source_url": "https://raw.githubusercontent.com/google-research/google-research/master/mbpp/sanitized-mbpp.json"
+    },
+    {
+      "bytes": 925932,
+      "path": "data/evalplus/HumanEvalPlus.jsonl.gz",
+      "sha256": "272720b90ac375502c8ed23cd791c2a93dfb22a911641a494da74a426c09f101",
+      "source_url": "https://raw.githubusercontent.com/evalplus/humanevalplus_release/main/HumanEvalPlus.jsonl.gz"
+    },
+    {
+      "bytes": 336032,
+      "path": "data/evalplus/MbppPlus.jsonl.gz",
+      "sha256": "af43697e8791c4c149bdfd6b489d8b5412507551ac20e28a439f650b8225db63",
+      "source_url": "https://raw.githubusercontent.com/evalplus/mbppplus_release/main/MbppPlus.jsonl.gz"
+    }
+  ],
+  "split_notes": [
+    "HumanEval_feedback uses only doctest-style examples parsed from the prompt.",
+    "HumanEval_eval keeps the original HumanEval test field for offline hidden evaluation.",
+    "MBPP feedback_split keeps setup/import lines plus the first assertion as feedback.",
+    "MBPP eval_split keeps setup/import lines plus the remaining assertions for offline evaluation.",
+    "no_tests variants remove all explicit assertions for production-mode experiments.",
+    "EvalPlus raw files are intended for robustness evaluation with an EvalPlus-compatible evaluator."
+  ]
+}

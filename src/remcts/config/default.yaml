@@ -1,0 +1,61 @@
+search:
+  max_iterations: 64
+  branch_factor: 3
+  max_depth: 8
+  exploration_c: 1.4
+  path_memory_k: 4
+  global_memory_top_t: 3
+  success_threshold: 0.999
+  no_improve_patience: 16
+
+evaluation:
+  mode: benchmark
+  oracle_policy: explicit_tests
+
+reward:
+  w_unit: 0.6
+  w_exec: 0.2
+  w_semantic: 0.2
+  semantic_mode: heuristic
+  semantic_on_success: false
+  semantic_on_failure: true
+  semantic_max_feedback_chars: 3000
+
+reflection:
+  mode: heuristic
+  max_feedback_chars: 3000
+  fallback_on_error: true
+
+production:
+  w_proxy: 0.4
+  w_exec: 0.2
+  w_semantic: 0.3
+  w_risk: 0.1
+  accept_threshold: 0.7
+  proxy_threshold: 0.5
+  exec_threshold: 0.6
+  semantic_threshold: 0.55
+  risk_threshold: 0.25
+  gamma_uncertainty: 0.15
+  gamma_risk: 0.35
+  gamma_deviation: 0.1
+  probe_confidence: 0.45
+  contract_confidence: 0.75
+  static_confidence: 0.8
+  meta_confidence: 0.35
+
+semantic:
+  alpha: 0.4
+  beta: 0.6
+
+sandbox:
+  timeout_sec: 3
+  max_output_chars: 4000
+
+llm:
+  model_name: mock
+  temperature: 0.2
+  max_tokens: 1024
+
+storage:
+  run_output_dir: outputs/runs

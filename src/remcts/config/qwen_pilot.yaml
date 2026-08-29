@@ -1,0 +1,44 @@
+search:
+  max_iterations: 8
+  branch_factor: 2
+  max_depth: 8
+  exploration_c: 1.4
+  path_memory_k: 4
+  global_memory_top_t: 2
+  success_threshold: 0.999
+  no_improve_patience: 6
+
+reward:
+  w_unit: 0.6
+  w_exec: 0.2
+  w_semantic: 0.2
+  semantic_mode: llm
+  semantic_on_success: false
+  semantic_on_failure: true
+  semantic_max_feedback_chars: 3000
+
+reflection:
+  mode: llm
+  max_feedback_chars: 3000
+  fallback_on_error: true
+
+semantic:
+  alpha: 0.4
+  beta: 0.6
+
+sandbox:
+  timeout_sec: 5
+  max_output_chars: 4000
+
+llm:
+  model_name: qwen3-8b
+  base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+  credentials_file: apikeys.txt
+  api_key_env: REMCTS_API_KEY
+  timeout_sec: 90
+  max_retries: 2
+  temperature: 0.2
+  max_tokens: 1024
+
+storage:
+  run_output_dir: outputs/runs

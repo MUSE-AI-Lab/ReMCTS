@@ -1,0 +1,35 @@
+cff-version: 1.2.0
+message: "If you use ReMCTS, please cite the software and the associated paper."
+type: software
+title: "ReMCTS: Reflection-Enhanced Monte Carlo Tree Search for Code Generation"
+version: 0.1.0
+license: MIT
+authors:
+  - family-names: Wang
+    given-names: Huifei
+    affiliation: "College of Computer Science and Software Engineering, Shenzhen University"
+  - family-names: Huang
+    given-names: Xinying
+    affiliation: "School of Artificial Intelligence, Shenzhen University"
+  - family-names: Sun
+    given-names: Yiheng
+    affiliation: "College of Computer Science and Software Engineering, Shenzhen University"
+  - family-names: Yuan
+    given-names: Yifan
+    affiliation: "School of Artificial Intelligence, Shenzhen University"
+    email: yifanyuan@szu.edu.cn
+preferred-citation:
+  type: conference-paper
+  title: "ReMCTS: Reflection-Enhanced Monte Carlo Tree Search for Code Generation"
+  authors:
+    - family-names: Wang
+      given-names: Huifei
+    - family-names: Huang
+      given-names: Xinying
+    - family-names: Sun
+      given-names: Yiheng
+    - family-names: Yuan
+      given-names: Yifan
+  conference:
+    name: "The 2026 Conference on Empirical Methods in Natural Language Processing"
+  year: 2026
