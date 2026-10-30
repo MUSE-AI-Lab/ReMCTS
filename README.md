@@ -28,12 +28,18 @@ Each iteration runs **selection → expansion → execution → reflection → b
 
 | Step | What happens | Code |
 |:-|:-|:-|
-| Selection | Descend by the memory-augmented UCB score $\mathrm{UCB}_M(v_i)=\bar V_i + C\sqrt{\ln(N_{p(i)}+1)/(N_i+1)} + \alpha\,\mathrm{Conf}(M_{path}) - \beta\,\mathrm{Risk}(M_{path}, \mathcal G)$ (Eqs. 3–4) | `core/selector.py` |
+| Selection | Descend by the memory-augmented UCB score below (Eqs. 3–4) | `core/selector.py` |
 | Expansion | Sample `branch_factor` children from a prompt with the task, the current program, its feedback, the last *k* path reflections and the top-*t* retrieved global failures | `core/expander.py`, `llm/prompt_builder.py` |
 | Execution | Run each child in a Python or C++17 subprocess and collect unit, execution, contract, probe, metamorphic, static, semantic and risk evidence | `sandbox/`, `evaluation/` |
 | Reward and acceptance | `known`: $0.6R_{unit}+0.2R_{exec}+0.2R_{sem}$, accept when all visible tests pass. `no_tests`: availability- and confidence-weighted proxy, execution, semantic and risk evidence plus an acceptance gate penalizing uncertainty, risk and code length (Eqs. 8–16) | `reward/scorer.py` |
 | Reflection | For every child that is not accepted, write a structured reflection (error type, root cause, fix hint, severity) into the path memory and the global memory (128-d hashed embeddings, cosine retrieval) | `memory/` |
 | Backpropagation | Add the reward to every node on the path | `core/backprop.py` |
+
+```math
+\mathrm{UCB}_M(v_i) = \bar{V}_i + C\sqrt{\frac{\ln(N_{p(i)}+1)}{N_i+1}} + \alpha\,\mathrm{Conf}\big(M^{(k)}_{\mathrm{path},i}\big) - \beta\,\mathrm{Risk}\big(M^{(k)}_{\mathrm{path},i}, \mathcal{G}\big)
+```
+
+`Conf` rewards low-severity reflections with repair hints and positive reward changes on the path; `Risk` is the highest similarity to high-severity failures in the global memory ($C=1.4$, $\alpha=0.4$, $\beta=0.6$).
 
 <p align="center"><img src="assets/evidence_reward.png" width="100%"><br><em>Availability-aware evidence: without explicit tests the unit-test item is unavailable, not failed.</em></p>
 
