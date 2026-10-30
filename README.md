@@ -1,182 +1,187 @@
-# ReMCTS
+<div align="center">
 
-Official implementation of **ReMCTS: Reflection-Enhanced Monte Carlo Tree
-Search for Code Generation**.
+# ReMCTS: Reflection-Enhanced Monte Carlo Tree Search for Code Generation
 
-ReMCTS is an execution-grounded, memory-augmented, LLM-guided search framework
-for code generation. It represents candidate programs as tree states, evaluates
-them with execution and proxy evidence, and reuses structured failure
-reflections within and across branches.
+**Wang Huifei**<sup>1</sup> · **Huang Xinying**<sup>2</sup> · **Sun Yiheng**<sup>1</sup> · **Yifan Yuan**<sup>2&dagger;</sup>
 
-## Features
+<sup>1</sup>College of Computer Science and Software Engineering, Shenzhen University
+<br>
+<sup>2</sup>School of Artificial Intelligence, Shenzhen University
+<br>
+<sup>&dagger;</sup>Corresponding author
 
-- MCTS-style multi-branch program search with UCB selection
-- Path-local and global reflection memory
-- Explicit-test (`known`) and no-explicit-test (`no_tests`) settings
-- Python and C++ execution backends
-- OpenAI-compatible LLM API client
-- HumanEval, MBPP-Sanitized, and HumanEval-X preparation utilities
-- Search traces, reward decompositions, and usage accounting
+**EMNLP 2026**
 
-## Repository Layout
+<a href="https://arxiv.org/abs/2609.34717"><img src="https://img.shields.io/badge/arXiv-2609.34717-b31b1b" alt="arXiv"></a>
+<a href="pyproject.toml"><img src="https://img.shields.io/badge/Python-%E2%89%A53.10-3776ab?logo=python&logoColor=white" alt="Python"></a>
+<a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-lightgrey" alt="License"></a>
 
-```text
-src/remcts/           Core package
-scripts/              Dataset preparation and experiment drivers
-tests/                Unit and integration tests
-data/                 Dataset documentation and generated local data
-docs/                 Public configuration and reproduction guides
-outputs/              Local run artifacts (ignored by Git)
-```
+</div>
 
-Paper drafts, review material, credentials, and full local experiment traces
-are intentionally excluded from the public repository.
+<p align="center"><img src="assets/overview.png" width="100%"><br><em>ReMCTS: selection, expansion, execution, reflection and backpropagation over a tree of candidate programs.</em></p>
 
-## Installation
+**TL;DR:** LLM-written code often looks right but fails on edge cases and hidden tests, and single-trajectory self-repair keeps patching an early wrong idea. **ReMCTS** searches over a tree of candidate programs: every candidate is executed in a sandbox, failures become structured reflections that the branch keeps (*path memory*) and that other branches retrieve (*task-local global memory*), and an availability-aware evidence reward tells failed checks apart from missing evidence, so the search also works when no tests are given. On HumanEval and MBPP-Sanitized, ReMCTS with visible tests beats direct generation in 8 of 10 model–dataset pairs; controlled sampling, repair, tree-search and memory ablations show where the gains come from and where they stop.
 
-ReMCTS requires Python 3.10 or newer. A C++17 compiler is additionally required
-for the HumanEval-X C++ pilot.
+## 🔍 Method
+
+Each iteration runs **selection → expansion → execution → reflection → backpropagation**:
+
+| Step | What happens | Code |
+|:-|:-|:-|
+| Selection | Descend by the memory-augmented UCB score $\mathrm{UCB}_M(v_i)=\bar V_i + C\sqrt{\ln(N_{p(i)}+1)/(N_i+1)} + \alpha\,\mathrm{Conf}(M_{path}) - \beta\,\mathrm{Risk}(M_{path}, \mathcal G)$ (Eqs. 3–4) | `core/selector.py` |
+| Expansion | Sample `branch_factor` children from a prompt with the task, the current program, its feedback, the last *k* path reflections and the top-*t* retrieved global failures | `core/expander.py`, `llm/prompt_builder.py` |
+| Execution | Run each child in a Python or C++17 subprocess and collect unit, execution, contract, probe, metamorphic, static, semantic and risk evidence | `sandbox/`, `evaluation/` |
+| Reward and acceptance | `known`: $0.6R_{unit}+0.2R_{exec}+0.2R_{sem}$, accept when all visible tests pass. `no_tests`: availability- and confidence-weighted proxy, execution, semantic and risk evidence plus an acceptance gate penalizing uncertainty, risk and code length (Eqs. 8–16) | `reward/scorer.py` |
+| Reflection | For every child that is not accepted, write a structured reflection (error type, root cause, fix hint, severity) into the path memory and the global memory (128-d hashed embeddings, cosine retrieval) | `memory/` |
+| Backpropagation | Add the reward to every node on the path | `core/backprop.py` |
+
+<p align="center"><img src="assets/evidence_reward.png" width="100%"><br><em>Availability-aware evidence: without explicit tests the unit-test item is unavailable, not failed.</em></p>
+
+## 🛠️ Installation
 
 ```bash
-git clone https://github.com/YOUR_GITHUB_ACCOUNT/ReMCTS.git
+git clone https://github.com/MUSE-AI-Lab/ReMCTS.git
 cd ReMCTS
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -e ".[dev]"
+python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
+pip install -e ".[dev]"
 pytest -q
 ```
 
-Replace `YOUR_GITHUB_ACCOUNT` after the public repository has been created.
-
-## Quick Smoke Test
-
-The default configuration uses a deterministic mock client. It exercises the
-search, execution, reward, memory, and artifact-writing pipeline without making
-network requests:
-
-```bash
-remcts-run-search \
-  --config src/remcts/config/default.yaml \
-  --task-id smoke-test \
-  --prompt "Write a Python function solution(x) that returns x." \
-  --tests "assert solution(1) == 1"
-```
-
-The mock client intentionally emits placeholder code, so this command validates
-the pipeline rather than model accuracy. Run artifacts are written below
-`outputs/runs/`.
-
-## Run with an LLM API
-
-ReMCTS works with OpenAI-compatible Chat Completions endpoints. Keep credentials
-in environment variables; never add keys to YAML files or commit them to Git.
-
-```bash
-export REMCTS_API_KEY="YOUR_API_KEY"
-
-remcts-run-search \
-  --config src/remcts/config/production.yaml \
-  --task-id no-tests-example \
-  --prompt "Write a Python function solution(x) that returns x." \
-  --entry-point solution
-```
-
-The public `production.yaml` uses a Qwen-compatible endpoint as an example.
-Change `llm.model_name` and `llm.base_url` for another OpenAI-compatible
-provider. See [Configuration](docs/CONFIGURATION.md) for credential precedence,
-API profiles, and the distinction between `known` and `no_tests`.
+Python 3.10+ is enough; models are called through any OpenAI-compatible Chat Completions API, so no GPU is needed. The HumanEval-X C++ pilot additionally needs `g++` with C++17.
 
 > [!WARNING]
-> ReMCTS executes model-generated code. The included executor applies timeouts
-> and static checks, but it is not a hardened security boundary. Run untrusted
-> generations only inside an isolated container or virtual machine with no
-> secrets, network access, or valuable writable files.
+> ReMCTS executes model-generated code. The executors add timeouts and process isolation, but they are not a security sandbox. Run experiments in a container or VM without secrets, network access or valuable writable files.
 
-## Prepare Datasets
+## 🚀 Quick Start
 
-The repository does not duplicate third-party benchmark data. Download the
-official sources and generate the local splits with:
+Offline smoke test (the mock client emits placeholder code, so this checks the pipeline, not accuracy):
+
+```bash
+remcts-run-search --config default --task-id smoke \
+    --prompt "Write a Python function solution(x) that returns x." --tests "assert solution(1) == 1"
+```
+
+With an LLM API (the packaged configs use Qwen3-8B on DashScope; omit `--tests` for the `no_tests` setting):
+
+```bash
+export REMCTS_API_KEY="sk-..."
+remcts-run-search --config remcts_no_tests --task-id mex --entry-point solution \
+    --prompt "Write a Python function solution(nums) that returns the smallest non-negative integer not in nums."
+```
+
+<details>
+<summary><b>Python API</b></summary>
+
+```python
+from remcts.config import load_config
+from remcts.core.search_engine import SearchEngine
+from remcts.core.state import ProblemSpec
+
+config = load_config("remcts_known")        # packaged name or path to your YAML
+config.llm_model_name = "qwen3-32b"
+result = SearchEngine(config).run(
+    ProblemSpec(task_id="demo", prompt="Return the input unchanged.", entry_point="solution",
+                tests="assert solution(1) == 1")
+)
+print(result.best_code, result.accepted, result.stop_reason)
+```
+</details>
+
+Every search writes `outputs/runs/<task>-<time>/` with the effective `config.json`, the tree (`nodes.jsonl`), the reflections (`memory.jsonl`) and `summary.json` (including token usage). Another provider only needs `llm.model_name` and `llm.base_url` in a YAML config; see [docs/CONFIGURATION.md](docs/CONFIGURATION.md).
+
+## 📦 Data
 
 ```bash
 python scripts/prepare_datasets.py
 ```
 
-Source URLs, generated files, split semantics, and checksums are documented in
-[data/README.md](data/README.md) and `data/dataset_manifest.json`. Review the
-upstream dataset licenses before redistributing derived files.
+downloads HumanEval, MBPP / MBPP-Sanitized, EvalPlus and HumanEval-X C++ from the official sources and derives the splits under `data/` (not tracked by Git). File hashes, sizes and row counts are recorded in [`data/dataset_manifest.json`](data/dataset_manifest.json). The experiment drivers use:
 
-## Evaluation
+| Dataset | Search input | Hidden evaluation |
+|:-|:-|:-|
+| `humaneval_full_known` | `humaneval/HumanEval.jsonl` | `humaneval/HumanEval_eval.jsonl` |
+| `humaneval_full_no_tests` | `humaneval/HumanEval_no_tests.jsonl` | `humaneval/HumanEval_eval.jsonl` |
+| `mbpp_sanitized_full_known` | `mbpp/mbpp_sanitized.json` | `mbpp/mbpp_sanitized_eval_split.json` |
+| `mbpp_sanitized_full_no_tests` | `mbpp/mbpp_sanitized_no_tests.json` | `mbpp/mbpp_sanitized_eval_split.json` |
+| `humanevalx_cpp` | `humaneval_x/humaneval_cpp_feedback.jsonl` (`example_test`) | `humaneval_x/humaneval_cpp_eval.jsonl` (official `test`) |
 
-After preparing the datasets, the generic dataset runners can be invoked as:
+## 🧪 Reproducing the Paper
 
-```bash
-remcts-evaluate \
-  --dataset humaneval \
-  --data-path data/humaneval/HumanEval_feedback.jsonl \
-  --config src/remcts/config/humaneval.yaml
-
-remcts-evaluate \
-  --dataset mbpp \
-  --data-path data/mbpp/mbpp_sanitized_feedback_split.json \
-  --config src/remcts/config/mbpp.yaml
-```
-
-The paper-specific multi-model, baseline, ablation, and C++ commands are listed
-in [Reproducibility](docs/REPRODUCIBILITY.md). These experiments call paid APIs;
-start with `--dry-run` or `--limit` where supported.
-
-## Outputs
-
-Each search writes a timestamped directory containing the effective
-configuration, tree nodes, memory records, and final summary:
+Put provider-labelled keys in a local `apikeys.txt` (ignored by Git); tasks are spread over the keys and move to the next key after a rate-limit or timeout error:
 
 ```text
-outputs/runs/<task-id>-<timestamp>/
-|-- config.json
-|-- nodes.jsonl
-|-- memory.jsonl
-`-- summary.json
+qwen: sk-...
+deepseek: sk-...
 ```
 
-Generated artifacts are ignored by Git. Publish only aggregate results or a
-separately reviewed artifact archive; traces may contain benchmark prompts,
-generated code, provider errors, and other information that should be audited
-before release.
+Then check the plan and the estimated cost before calling any API:
 
-## Reproducibility Notes
+```bash
+remcts-experiment main --dry-run
+```
 
-- Hidden tests are used only for offline final evaluation, never for search or
-  candidate selection.
-- The public configs preserve the search and acceptance parameters used by the
-  experiment drivers. Provider endpoints and credentials are deployment
-  settings and may be overridden locally.
-- API model revisions, server load, and provider-side decoding can affect exact
-  replication. Record the model identifier, provider, date, config, token use,
-  and run manifest for every experiment.
+| Paper | Command |
+|:-|:-|
+| Table 1: Direct vs. ReMCTS (`known`, `no_tests`) | `remcts-experiment main --report-dir outputs/reports/main` |
+| Tables 11–12: Best-of-8, Reflexion-style, Reflection-style, pure-MCTS, MCTS-style | `remcts-experiment baselines --report-dir outputs/reports/baselines` |
+| Table 2: Best-of-32 and Reflexion-16 | `remcts-experiment baselines --methods best_of_n reflexion --best-of-n 32 --reflexion-trials 16 --models qwen3-8b qwen3-32b --datasets mbpp_sanitized_full_no_tests` |
+| Tables 3, 16: memory ablations | `remcts-experiment ablations --report-dir outputs/reports/ablations` |
+| Table 7: HumanEval-X C++ pilot | `remcts-experiment main --datasets humanevalx_cpp --limit 30` |
 
-## Citation
+All commands share `--models`, `--datasets`, `--workers`, `--limit`, `--budget-cny` (stop when the estimated spend reaches the budget) and `--report-dir`. A report directory holds one `<label>.json` per run (per-task rows with the returned code, hidden-test results and token usage), `summary.md` / `summary.json`, and the search traces under `runs/`. Interrupted runs resume from `<label>.progress.json` when the same `--report-dir` is passed again; `remcts-experiment status <report-dir>` shows the progress. Details are in [docs/REPRODUCIBILITY.md](docs/REPRODUCIBILITY.md).
 
-GitHub renders citation metadata from [`CITATION.cff`](CITATION.cff). The
-proceedings DOI and final repository DOI should be added after they are issued.
+## 📊 Results
+
+Hidden solve rates (%) reported in the paper (Table 1); numbers in parentheses are differences to Direct `no_tests`.
+
+| Model | Dataset | Direct `no_tests` | ReMCTS `no_tests` | ReMCTS `known` |
+|:-|:-|:-:|:-:|:-:|
+| Qwen3-1.7B | HumanEval | 60.37 | 69.51 (+9.14) | 83.54 (+23.17) |
+| | MBPP | 53.40 | 51.29 (−2.11) | 63.47 (+10.07) |
+| Qwen3-8B | HumanEval | 79.88 | 86.59 (+6.71) | 93.90 (+14.02) |
+| | MBPP | 64.17 | 66.74 (+2.57) | 74.24 (+10.07) |
+| Qwen3-14B | HumanEval | 82.93 | 78.66 (−4.27) | 82.93 (+0.00) |
+| | MBPP | 66.98 | 60.42 (−6.56) | 65.57 (−1.41) |
+| Qwen3-32B | HumanEval | 89.63 | 89.63 (+0.00) | 95.12 (+5.49) |
+| | MBPP | 71.90 | 70.49 (−1.41) | 77.99 (+6.09) |
+| DeepSeek-V4-Flash | HumanEval | 80.49 | 95.12 (+14.63) | 98.78 (+18.29) |
+| | MBPP | 72.60 | 72.83 (+0.23) | 81.03 (+8.43) |
+
+`known` is a test-guided mechanism validation and is not equivalent to standard pass@1. Hosted models change over time, so reruns can deviate; every report records the model alias, date, configuration and token usage.
+
+## 📁 Repository Structure
+
+```text
+src/remcts/
+├── core/          # search tree, memory-augmented UCB selection, expansion, stopping rules, search loop
+├── memory/        # structured reflections, path memory, task-local global memory
+├── reward/        # unit / execution / semantic / risk scores and the no_tests acceptance gate
+├── evaluation/    # contract checks, probes, metamorphic properties
+├── sandbox/       # Python and C++17 executors
+├── llm/           # OpenAI-compatible client, credential files, prompts, response parsing
+├── experiments/   # paper experiments: datasets, baselines, ablations, runner, reports (remcts-experiment)
+├── config/        # YAML configs of ReMCTS and the tree-search baselines
+├── tasks/         # HumanEval / MBPP loaders
+├── cli/           # remcts-run-search, remcts-evaluate, remcts-inspect-run
+└── storage/ · utils/
+scripts/prepare_datasets.py   # benchmark download and split derivation
+docs/                         # configuration, reproducibility, data policy
+tests/
+```
+
+## 📝 Citation
 
 ```bibtex
 @inproceedings{wang2026remcts,
-  title     = {ReMCTS: Reflection-Enhanced Monte Carlo Tree Search for Code Generation},
-  author    = {Wang, Huifei and Huang, Xinying and Sun, Yiheng and Yuan, Yifan},
-  booktitle = {Proceedings of the 2026 Conference on Empirical Methods in Natural Language Processing},
-  year      = {2026}
+  title         = {{ReMCTS}: Reflection-Enhanced Monte Carlo Tree Search for Code Generation},
+  author        = {Wang, Huifei and Huang, Xinying and Sun, Yiheng and Yuan, Yifan},
+  booktitle     = {Proceedings of the 2026 Conference on Empirical Methods in Natural Language Processing},
+  year          = {2026},
+  eprint        = {2609.34717},
+  archivePrefix = {arXiv}
 }
 ```
 
-## License
+## 📄 License
 
-The ReMCTS source code is released under the [MIT License](LICENSE). Dataset and
-model licenses remain with their respective owners. Confirm the intended code
-license with all authors and Shenzhen University before the first public
-release.
-
-## Acknowledgments
-
-This work is supported by the Intelligent Computing Center of Shenzhen
-University.
+[MIT](LICENSE). Benchmarks and models keep their own licenses and terms.
