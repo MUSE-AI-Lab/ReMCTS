@@ -4,6 +4,7 @@ from remcts.core.state import ExecutionResult
 
 
 def score_semantic_heuristic(execution_result: ExecutionResult) -> tuple[float, str]:
+    """Execution-based fallback for the semantic reward when no LLM review is used."""
     if not execution_result.compile_ok:
         return 0.0, "代码未通过语法检查"
     if execution_result.exec_ok and execution_result.total_tests > 0:
@@ -12,7 +13,3 @@ def score_semantic_heuristic(execution_result: ExecutionResult) -> tuple[float, 
     if execution_result.exec_ok:
         return 0.4, "代码可以运行，但缺少充分测试信息"
     return 0.1, "代码可以编译但执行失败"
-
-
-def score_semantic(execution_result: ExecutionResult) -> tuple[float, str]:
-    return score_semantic_heuristic(execution_result)

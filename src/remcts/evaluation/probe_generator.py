@@ -8,21 +8,9 @@ from remcts.llm.client import BaseLLMClient
 from remcts.llm.response_parser import parse_json_block
 from remcts.sandbox.executor import PythonExecutor
 
-from .contract_checker import expected_entry_point
+from .contract_checker import entry_point_arity, expected_entry_point, mentions_any
 from .evidence import EvidenceResult
 
-
-def _arg_counts(code: str, entry_point: str) -> tuple[int, int, bool] | None:
-    try:
-        tree = ast.parse(code)
-    except SyntaxError:
-        return None
-    for node in tree.body:
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == entry_point:
-            positional = len(node.args.posonlyargs) + len(node.args.args)
-            required = positional - len(node.args.defaults)
-            return required, positional, node.args.vararg is not None
-    return None
 
 
 def build_probe_tests(
@@ -32,7 +20,7 @@ def build_probe_tests(
     llm_client: BaseLLMClient | None = None,
 ) -> str:
     entry_point = expected_entry_point(problem)
-    arg_counts = _arg_counts(code, entry_point)
+    arg_counts = entry_point_arity(code, entry_point)
     if arg_counts is None:
         return ""
     required_args, positional_args, has_vararg = arg_counts
@@ -157,7 +145,7 @@ def _problem_specific_probe_tests(
     can_pass_one_arg = positional_args >= 1 or has_vararg
     if not can_pass_one_arg:
         return []
-    if _has_any(prompt, ["mex", "minimum excluded", "minimum excludant", "最小未出现", "最小的非负整数"]):
+    if mentions_any(prompt, ["mex", "minimum excluded", "minimum excludant", "最小未出现", "最小的非负整数"]):
         return [
             f"assert {entry_point}([0, 1, 2]) == 3",
             f"assert {entry_point}([1, 2, 3]) == 0",
@@ -166,9 +154,6 @@ def _problem_specific_probe_tests(
         ]
     return []
 
-
-def _has_any(text: str, patterns: list[str]) -> bool:
-    return any(pattern in text for pattern in patterns)
 
 
 def run_probe_tests(

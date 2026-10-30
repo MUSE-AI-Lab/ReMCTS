@@ -1,3 +1,2 @@
 numpy>=1.26
 PyYAML>=6.0
-jsonlines>=4.0

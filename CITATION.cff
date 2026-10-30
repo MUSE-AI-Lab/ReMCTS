@@ -1,9 +1,14 @@
 cff-version: 1.2.0
-message: "If you use ReMCTS, please cite the software and the associated paper."
+message: "If you use ReMCTS, please cite the paper."
 type: software
 title: "ReMCTS: Reflection-Enhanced Monte Carlo Tree Search for Code Generation"
 version: 0.1.0
 license: MIT
+repository-code: "https://github.com/MUSE-AI-Lab/ReMCTS"
+identifiers:
+  - type: other
+    value: "arXiv:2609.34717"
+    description: "arXiv preprint"
 authors:
   - family-names: Wang
     given-names: Huifei
@@ -30,6 +35,8 @@ preferred-citation:
       given-names: Yiheng
     - family-names: Yuan
       given-names: Yifan
+  collection-title: "Proceedings of the 2026 Conference on Empirical Methods in Natural Language Processing"
   conference:
-    name: "The 2026 Conference on Empirical Methods in Natural Language Processing"
+    name: "The 2026 Conference on Empirical Methods in Natural Language Processing (EMNLP 2026)"
   year: 2026
+  url: "https://arxiv.org/abs/2609.34717"

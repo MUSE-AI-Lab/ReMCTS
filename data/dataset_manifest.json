@@ -1,5 +1,5 @@
 {
-  "description": "Datasets prepared for ReMCTS Chapter 4 experiments.",
+  "description": "Datasets prepared for the ReMCTS experiments.",
   "generated": [
     {
       "bytes": 106247,
@@ -132,6 +132,18 @@
       "path": "data/evalplus/MbppPlus_base_assertions.json",
       "rows": 378,
       "sha256": "4b6bb9ea1981de827367420e7b13f5c9786ccaf0857d2e618d476fc3b1d04060"
+    },
+    {
+      "bytes": 178128,
+      "path": "data/humaneval_x/humaneval_cpp_feedback.jsonl",
+      "rows": 164,
+      "sha256": "0df1a95ee922d13e1abc3271b443dfa9279b5e69bb4a7f24b2350474f6ec1910"
+    },
+    {
+      "bytes": 219820,
+      "path": "data/humaneval_x/humaneval_cpp_eval.jsonl",
+      "rows": 164,
+      "sha256": "88a79cd17625bcaafdb2b2b607b2bc72120c159b86724347944083214139c464"
     }
   ],
   "sources": [
@@ -164,6 +176,12 @@
       "path": "data/evalplus/MbppPlus.jsonl.gz",
       "sha256": "af43697e8791c4c149bdfd6b489d8b5412507551ac20e28a439f650b8225db63",
       "source_url": "https://raw.githubusercontent.com/evalplus/mbppplus_release/main/MbppPlus.jsonl.gz"
+    },
+    {
+      "bytes": 50995,
+      "path": "data/humaneval_x/humaneval_cpp.jsonl.gz",
+      "sha256": "dcf2e280a1e91bbc3c5f90edb41397e8a9ac1ccc9f5d2b70082f0b0fbfb6dbb0",
+      "source_url": "https://raw.githubusercontent.com/THUDM/CodeGeeX/main/codegeex/benchmark/humaneval-x/cpp/data/humaneval_cpp.jsonl.gz"
     }
   ],
   "split_notes": [
@@ -172,6 +190,7 @@
     "MBPP feedback_split keeps setup/import lines plus the first assertion as feedback.",
     "MBPP eval_split keeps setup/import lines plus the remaining assertions for offline evaluation.",
     "no_tests variants remove all explicit assertions for production-mode experiments.",
-    "EvalPlus raw files are intended for robustness evaluation with an EvalPlus-compatible evaluator."
+    "EvalPlus raw files are intended for robustness evaluation with an EvalPlus-compatible evaluator.",
+    "HumanEval-X C++ feedback keeps the public example_test; eval keeps the official test field."
   ]
 }

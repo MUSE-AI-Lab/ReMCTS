@@ -1,1 +1,1 @@
-"""Benchmark and ablation utilities."""
+"""Evidence for scoring candidates: unit tests, execution, contracts, probes and metamorphic properties."""

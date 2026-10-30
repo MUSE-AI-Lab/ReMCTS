@@ -45,10 +45,3 @@ def build_reflection_from_execution(
         source_task_id=source_task_id,
         source_node_id=source_node_id,
     )
-
-
-def render_reflection(record: ReflectionRecord) -> str:
-    return (
-        f"error_type={record.error_type}; summary={record.summary}; "
-        f"root_cause={record.root_cause}; fix_hint={record.fix_hint}"
-    )

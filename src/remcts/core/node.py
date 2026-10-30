@@ -24,9 +24,6 @@ class SearchNode:
     def mean_value(self) -> float:
         return self.total_value / self.visits if self.visits else 0.0
 
-    def actual_memory_len(self, k: int) -> int:
-        return min(k, self.depth + 1)
-
     def add_child(self, child_id: str) -> None:
         if child_id not in self.children:
             self.children.append(child_id)

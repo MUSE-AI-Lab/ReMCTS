@@ -36,10 +36,3 @@ class GlobalMemoryStore:
             scored.append((record, cosine_similarity(query_vector, record.embedding)))
         scored.sort(key=lambda item: item[1], reverse=True)
         return scored[:top_k]
-
-    def save(self, path: str) -> None:
-        from pathlib import Path
-        import json
-
-        data = [record.to_dict() for record in self.records]
-        Path(path).write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")

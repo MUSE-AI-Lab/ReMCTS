@@ -34,39 +34,8 @@ apikeys.txt
 *.p12
 *.pfx
 
-# Runtime artifacts and generated benchmark data
+# Run artifacts and generated benchmark data
 outputs/
 data/*
 !data/README.md
 !data/dataset_manifest.json
-
-# Private research and submission material kept in this working directory
-/meta_review/
-/rebuttal/
-/reMCTS_EMNLP2026_unzipped/
-/reMCTS_EMNLP2026.zip
-/论文/
-/调研/
-/总结.md
-
-# Internal planning documents; only the public guides below are released
-docs/*
-!docs/CONFIGURATION.md
-!docs/DATA.md
-!docs/PUBLISHING.md
-!docs/REPRODUCIBILITY.md
-
-# Local-only provider configuration and unfinished scratch entry point
-src/remcts/config/ballbox.yaml
-scripts/ablation.sh
-
-# LaTeX and miscellaneous generated files
-*.aux
-*.bbl
-*.blg
-*.fdb_latexmk
-*.fls
-*.log
-*.out
-*.synctex.gz
-/=8.0

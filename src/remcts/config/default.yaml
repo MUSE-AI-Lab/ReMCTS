@@ -1,3 +1,4 @@
+# Offline smoke test: the mock client emits placeholder code, so this checks the pipeline, not accuracy.
 search:
   max_iterations: 64
   branch_factor: 3

@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import ast
 from dataclasses import dataclass
 
 from remcts.core.state import ProblemSpec, SearchConfig
 from remcts.sandbox.executor import PythonExecutor
 
-from .contract_checker import expected_entry_point
+from .contract_checker import entry_point_arity, expected_entry_point, mentions_any
 from .evidence import EvidenceResult
 
 
@@ -19,23 +18,11 @@ class MetamorphicSuite:
         return "\n".join(self.tests)
 
 
-def _arg_counts(code: str, entry_point: str) -> tuple[int, int, bool] | None:
-    try:
-        tree = ast.parse(code)
-    except SyntaxError:
-        return None
-    for node in tree.body:
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == entry_point:
-            positional = len(node.args.posonlyargs) + len(node.args.args)
-            required = positional - len(node.args.defaults)
-            return required, positional, node.args.vararg is not None
-    return None
-
 
 def build_metamorphic_suite(problem: ProblemSpec, code: str) -> MetamorphicSuite:
     prompt = problem.prompt.lower()
     entry = expected_entry_point(problem)
-    arg_counts = _arg_counts(code, entry)
+    arg_counts = entry_point_arity(code, entry)
     names: list[str] = []
     tests: list[str] = []
     if arg_counts is None:
@@ -43,7 +30,7 @@ def build_metamorphic_suite(problem: ProblemSpec, code: str) -> MetamorphicSuite
     required_args, positional_args, has_vararg = arg_counts
 
     if positional_args >= 1 or has_vararg:
-        if _has_any(prompt, ["unchanged", "same value", "identity", "return input", "returns the input", "原样", "不变"]):
+        if mentions_any(prompt, ["unchanged", "same value", "identity", "return input", "returns the input", "原样", "不变"]):
             names.append("identity")
             tests.extend(
                 [
@@ -52,13 +39,13 @@ def build_metamorphic_suite(problem: ProblemSpec, code: str) -> MetamorphicSuite
                     f"assert {entry}([1, 2, 3]) == [1, 2, 3]",
                 ]
             )
-        if _has_any(prompt, ["uppercase", "upper case", "upper-case", "大写"]):
+        if mentions_any(prompt, ["uppercase", "upper case", "upper-case", "大写"]):
             names.append("uppercase")
             tests.append(f"assert {entry}('aBc') == 'ABC'")
-        if _has_any(prompt, ["lowercase", "lower case", "lower-case", "小写"]):
+        if mentions_any(prompt, ["lowercase", "lower case", "lower-case", "小写"]):
             names.append("lowercase")
             tests.append(f"assert {entry}('aBc') == 'abc'")
-        if _has_any(prompt, ["reverse", "reversed", "反转", "倒序"]):
+        if mentions_any(prompt, ["reverse", "reversed", "反转", "倒序"]):
             names.append("reverse")
             tests.extend(
                 [
@@ -66,7 +53,7 @@ def build_metamorphic_suite(problem: ProblemSpec, code: str) -> MetamorphicSuite
                     f"assert {entry}([1, 2, 3]) == [3, 2, 1]",
                 ]
             )
-        if _has_any(prompt, ["sort", "sorted", "ascending", "升序", "排序"]):
+        if mentions_any(prompt, ["sort", "sorted", "ascending", "升序", "排序"]):
             names.append("sorted")
             tests.extend(
                 [
@@ -74,7 +61,7 @@ def build_metamorphic_suite(problem: ProblemSpec, code: str) -> MetamorphicSuite
                     f"assert len({entry}([3, 1, 2])) == 3",
                 ]
             )
-        if _has_any(
+        if mentions_any(
             prompt,
             [
                 "return length",
@@ -95,7 +82,7 @@ def build_metamorphic_suite(problem: ProblemSpec, code: str) -> MetamorphicSuite
                     f"assert {entry}('abc') == 3",
                 ]
             )
-        if _has_any(prompt, ["palindrome", "回文"]):
+        if mentions_any(prompt, ["palindrome", "回文"]):
             names.append("palindrome")
             tests.extend(
                 [
@@ -103,7 +90,7 @@ def build_metamorphic_suite(problem: ProblemSpec, code: str) -> MetamorphicSuite
                     f"assert {entry}('abc') is False",
                 ]
             )
-        if _has_any(prompt, ["even", "偶数"]):
+        if mentions_any(prompt, ["even", "偶数"]):
             names.append("even")
             tests.extend(
                 [
@@ -111,7 +98,7 @@ def build_metamorphic_suite(problem: ProblemSpec, code: str) -> MetamorphicSuite
                     f"assert {entry}(3) is False",
                 ]
             )
-        if _has_any(prompt, ["odd", "奇数"]):
+        if mentions_any(prompt, ["odd", "奇数"]):
             names.append("odd")
             tests.extend(
                 [
@@ -119,7 +106,7 @@ def build_metamorphic_suite(problem: ProblemSpec, code: str) -> MetamorphicSuite
                     f"assert {entry}(2) is False",
                 ]
             )
-        if _has_any(prompt, ["mex", "minimum excluded", "minimum excludant", "最小未出现", "最小的非负整数"]):
+        if mentions_any(prompt, ["mex", "minimum excluded", "minimum excludant", "最小未出现", "最小的非负整数"]):
             names.append("mex")
             tests.extend(
                 [
@@ -134,7 +121,7 @@ def build_metamorphic_suite(problem: ProblemSpec, code: str) -> MetamorphicSuite
                 ]
             )
     if required_args == 2:
-        if _has_any(prompt, ["add", "sum", "addition", "相加", "求和"]):
+        if mentions_any(prompt, ["add", "sum", "addition", "相加", "求和"]):
             names.append("add")
             tests.extend(
                 [
@@ -142,7 +129,7 @@ def build_metamorphic_suite(problem: ProblemSpec, code: str) -> MetamorphicSuite
                     f"assert {entry}(-1, 1) == 0",
                 ]
             )
-        if _has_any(prompt, ["multiply", "product", "乘", "乘积"]):
+        if mentions_any(prompt, ["multiply", "product", "乘", "乘积"]):
             names.append("multiply")
             tests.extend(
                 [
@@ -150,7 +137,7 @@ def build_metamorphic_suite(problem: ProblemSpec, code: str) -> MetamorphicSuite
                     f"assert {entry}(-1, 4) == -4",
                 ]
             )
-        if _has_any(prompt, ["maximum", "max", "larger", "最大"]):
+        if mentions_any(prompt, ["maximum", "max", "larger", "最大"]):
             names.append("max")
             tests.extend(
                 [
@@ -198,9 +185,6 @@ def run_metamorphic_tests(
         },
     )
 
-
-def _has_any(text: str, patterns: list[str]) -> bool:
-    return any(pattern in text for pattern in patterns)
 
 
 def _dedupe(items: list[str]) -> list[str]:

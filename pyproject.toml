@@ -28,26 +28,27 @@ classifiers = [
 ]
 dependencies = [
   "numpy>=1.26",
-  "PyYAML>=6.0",
-  "jsonlines>=4.0"
+  "PyYAML>=6.0"
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[project.urls]
+Repository = "https://github.com/MUSE-AI-Lab/ReMCTS"
+Paper = "https://arxiv.org/abs/2609.34717"
 
 [project.scripts]
 remcts-run-search = "remcts.cli.run_search:main"
 remcts-evaluate = "remcts.cli.evaluate:main"
 remcts-inspect-run = "remcts.cli.inspect_run:main"
+remcts-experiment = "remcts.experiments.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.setuptools.package-data]
-remcts = ["config/*.yaml", "llm/templates/*.md"]
-
-[tool.setuptools.exclude-package-data]
-remcts = ["config/ballbox.yaml"]
+remcts = ["config/*.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

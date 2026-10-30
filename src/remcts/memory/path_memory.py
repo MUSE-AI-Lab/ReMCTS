@@ -3,12 +3,6 @@ from __future__ import annotations
 from remcts.core.state import ReflectionRecord
 
 
-def truncate_memory(memory: list[ReflectionRecord], k: int) -> list[ReflectionRecord]:
-    if k <= 0:
-        return []
-    return list(memory)[-k:]
-
-
 def build_path_memory(
     parent_memory: list[ReflectionRecord],
     new_reflection: ReflectionRecord | None,

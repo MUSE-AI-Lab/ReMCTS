@@ -1,12 +1,13 @@
+# ReMCTS, no_tests setting: no explicit tests during search; proxy evidence and the acceptance gate (Eqs. 8-11).
 search:
   max_iterations: 8
-  branch_factor: 2
+  branch_factor: 5
   max_depth: 8
   exploration_c: 1.4
-  path_memory_k: 4
+  path_memory_k: 3
   global_memory_top_t: 2
   success_threshold: 0.999
-  no_improve_patience: 6
+  no_improve_patience: 8
 
 evaluation:
   mode: production
@@ -43,6 +44,10 @@ production:
   contract_confidence: 0.75
   static_confidence: 0.80
   meta_confidence: 0.35
+  complete_branch_before_accept: true
+  min_accept_iterations: 3
+  probe_llm_tests: true
+  probe_llm_count: 4
 
 semantic:
   alpha: 0.4
@@ -55,10 +60,10 @@ sandbox:
 llm:
   model_name: qwen3-8b
   base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
-  credentials_file: apikeys.txt
   api_key_env: REMCTS_API_KEY
   timeout_sec: 90
-  max_retries: 2
+  max_retries: 5
+  enable_thinking: false
   temperature: 0.2
   max_tokens: 1024
 

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from remcts.llm.client import BaseLLMClient
-from remcts.llm.prompt_builder import build_expand_prompt
+from remcts.llm.prompt_builder import build_expand_prompt, is_cpp
 from remcts.llm.response_parser import extract_code
 from remcts.memory.global_memory import GlobalMemoryStore
+from remcts.sandbox.cpp_executor import strip_cpp_main_or_tests
 from remcts.utils.hashing import stable_hash
 
 from .node import SearchNode
@@ -21,6 +22,7 @@ class NodeExpander:
         global_memory: GlobalMemoryStore,
         config: SearchConfig,
     ) -> list[CodeState]:
+        """Sample ``branch_factor`` distinct candidates conditioned on path and global memory."""
         query_text = node.state.stderr or node.state.code or problem.prompt
         retrieved = global_memory.retrieve(query_text, top_k=config.global_memory_top_t)
         prompt = build_expand_prompt(problem, node, retrieved, config.path_memory_k)
@@ -45,13 +47,10 @@ class NodeExpander:
 
 
 def _normalize_candidate_code(problem: ProblemSpec, code: str) -> str:
-    language = str(problem.metadata.get("language") or "").lower()
-    if language not in {"cpp", "c++", "cxx"}:
+    """For C++ tasks, drop any test ``main`` and restore the required declaration and headers."""
+    if not is_cpp(problem):
         return code
-    for marker in ["#undef NDEBUG", "\nint main(", "\nint main()"]:
-        idx = code.find(marker)
-        if idx >= 0:
-            code = code[:idx].rstrip()
+    code = strip_cpp_main_or_tests(code)
     entry = problem.entry_point or "solution"
     declaration = str(problem.metadata.get("declaration") or problem.prompt or "")
     if entry and f"{entry}(" not in code:

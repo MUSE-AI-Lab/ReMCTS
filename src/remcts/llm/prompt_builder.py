@@ -5,6 +5,14 @@ from remcts.memory.path_memory import render_memory_for_prompt
 from remcts.core.node import SearchNode
 from remcts.core.state import ProblemSpec, ReflectionRecord
 
+# The prompts below are the ones used in the paper experiments; keep their wording fixed.
+
+CPP_LANGUAGES = {"cpp", "c++", "cxx"}
+
+
+def is_cpp(problem: ProblemSpec) -> bool:
+    return str(problem.metadata.get("language") or "").lower() in CPP_LANGUAGES
+
 
 def _render_retrieved_memories(retrieved: list[tuple[ReflectionRecord, float]]) -> str:
     if not retrieved:
@@ -23,8 +31,7 @@ def build_expand_prompt(
     retrieved: list[tuple[ReflectionRecord, float]],
     k: int,
 ) -> str:
-    language = str(problem.metadata.get("language") or "").lower()
-    if language in {"cpp", "c++", "cxx"}:
+    if is_cpp(problem):
         return _build_cpp_expand_prompt(problem, node, retrieved, k)
 
     local_memory = render_memory_for_prompt(node.path_memory[-k:])

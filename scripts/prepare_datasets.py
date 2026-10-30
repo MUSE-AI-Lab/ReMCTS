@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+"""Download the official benchmark files and derive the search / hidden-evaluation splits.
+
+    python scripts/prepare_datasets.py [--force] [--skip-download]
+
+Outputs go to data/ (ignored by Git); data/dataset_manifest.json records URLs, sizes and SHA-256.
+"""
 from __future__ import annotations
 
 import argparse
@@ -7,12 +13,14 @@ import doctest
 import gzip
 import hashlib
 import json
+import re
 import shutil
 import urllib.request
-from ast import FunctionDef, parse
+from ast import FunctionDef
 from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
+import warnings
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -38,6 +46,13 @@ SOURCES = {
     "mbpp_plus": {
         "url": "https://raw.githubusercontent.com/evalplus/mbppplus_release/main/MbppPlus.jsonl.gz",
         "path": DATA_DIR / "evalplus" / "MbppPlus.jsonl.gz",
+    },
+    "humanevalx_cpp": {
+        "url": (
+            "https://raw.githubusercontent.com/THUDM/CodeGeeX/main/"
+            "codegeex/benchmark/humaneval-x/cpp/data/humaneval_cpp.jsonl.gz"
+        ),
+        "path": DATA_DIR / "humaneval_x" / "humaneval_cpp.jsonl.gz",
     },
 }
 
@@ -92,20 +107,28 @@ def read_jsonl(path: Path) -> list[dict[str, Any]]:
 
 def write_jsonl(path: Path, rows: Iterable[dict[str, Any]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as handle:
+    with path.open("w", encoding="utf-8", newline="\n") as handle:
         for row in rows:
             handle.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
 
 
 def write_json(path: Path, rows: list[dict[str, Any]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(rows, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    text = json.dumps(rows, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+    path.write_text(text, encoding="utf-8", newline="\n")
 
 
 def gunzip_to_jsonl(source: Path, destination: Path) -> None:
     destination.parent.mkdir(parents=True, exist_ok=True)
-    with gzip.open(source, "rt", encoding="utf-8") as src, destination.open("w", encoding="utf-8") as dst:
+    with gzip.open(source, "rt", encoding="utf-8") as src, destination.open("w", encoding="utf-8", newline="\n") as dst:
         shutil.copyfileobj(src, dst)
+
+
+def parse(code: str) -> ast.Module:
+    # Reference solutions contain regex strings such as "\w"; their SyntaxWarnings are noise here.
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", SyntaxWarning)
+        return ast.parse(code)
 
 
 def first_function_name(code: str) -> str | None:
@@ -323,9 +346,40 @@ def prepare_evalplus(manifest: dict[str, Any]) -> None:
     manifest["generated"].append(describe_file(path, rows=len(mbpp_plus_for_loader)))
 
 
+def cpp_entry_point(item: dict[str, Any]) -> str:
+    """Name of the last function defined in the HumanEval-X declaration (or prompt)."""
+    pattern = r"([A-Za-z_][A-Za-z0-9_]*)\s*\([^;{}]*\)\s*\{"
+    for text in (item.get("declaration"), item.get("prompt")):
+        matches = re.findall(pattern, str(text or ""))
+        if matches:
+            return matches[-1]
+    return "solution"
+
+
+def prepare_humanevalx_cpp(manifest: dict[str, Any]) -> None:
+    with gzip.open(SOURCES["humanevalx_cpp"]["path"], "rt", encoding="utf-8") as handle:
+        rows = [json.loads(line) for line in handle if line.strip()]
+    feedback_rows: list[dict[str, Any]] = []
+    eval_rows: list[dict[str, Any]] = []
+    for item in rows:
+        base = {
+            "task_id": item["task_id"],
+            "prompt": item.get("prompt", ""),
+            "declaration": item.get("declaration", ""),
+            "entry_point": cpp_entry_point(item),
+            "language": "cpp",
+        }
+        feedback_rows.append({**base, "test": item.get("example_test", ""), "split": "feedback_example_test"})
+        eval_rows.append({**base, "test": item.get("test", ""), "split": "hidden_eval"})
+    for name, out_rows in (("humaneval_cpp_feedback.jsonl", feedback_rows), ("humaneval_cpp_eval.jsonl", eval_rows)):
+        path = DATA_DIR / "humaneval_x" / name
+        write_jsonl(path, out_rows)
+        manifest["generated"].append(describe_file(path, rows=len(out_rows)))
+
+
 def describe_file(path: Path, *, rows: int | None = None, source_url: str | None = None) -> dict[str, Any]:
     item: dict[str, Any] = {
-        "path": str(path.relative_to(ROOT)),
+        "path": path.relative_to(ROOT).as_posix(),
         "bytes": path.stat().st_size,
         "sha256": sha256(path),
     }
@@ -338,7 +392,7 @@ def describe_file(path: Path, *, rows: int | None = None, source_url: str | None
 
 def build_manifest() -> dict[str, Any]:
     manifest: dict[str, Any] = {
-        "description": "Datasets prepared for ReMCTS Chapter 4 experiments.",
+        "description": "Datasets prepared for the ReMCTS experiments.",
         "sources": [],
         "generated": [],
         "split_notes": [
@@ -348,6 +402,7 @@ def build_manifest() -> dict[str, Any]:
             "MBPP eval_split keeps setup/import lines plus the remaining assertions for offline evaluation.",
             "no_tests variants remove all explicit assertions for production-mode experiments.",
             "EvalPlus raw files are intended for robustness evaluation with an EvalPlus-compatible evaluator.",
+            "HumanEval-X C++ feedback keeps the public example_test; eval keeps the official test field.",
         ],
     }
     for name, source in SOURCES.items():
@@ -374,8 +429,10 @@ def main() -> None:
     prepare_humaneval(manifest)
     prepare_mbpp(manifest)
     prepare_evalplus(manifest)
+    prepare_humanevalx_cpp(manifest)
     manifest_path = DATA_DIR / "dataset_manifest.json"
-    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    text = json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+    manifest_path.write_text(text, encoding="utf-8", newline="\n")
     print(f"Wrote {manifest_path.relative_to(ROOT)}")
     print(f"Prepared {len(manifest['sources'])} source files and {len(manifest['generated'])} derived files.")
 

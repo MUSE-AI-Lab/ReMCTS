@@ -11,7 +11,26 @@ def expected_entry_point(problem: ProblemSpec) -> str:
     return problem.entry_point or str(problem.metadata.get("entry_point") or "solution")
 
 
+def entry_point_arity(code: str, entry_point: str) -> tuple[int, int, bool] | None:
+    """``(required, positional, has_vararg)`` of the top-level entry function, or None if absent."""
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return None
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == entry_point:
+            positional = len(node.args.posonlyargs) + len(node.args.args)
+            required = positional - len(node.args.defaults)
+            return required, positional, node.args.vararg is not None
+    return None
+
+
+def mentions_any(text: str, patterns: list[str]) -> bool:
+    return any(pattern in text for pattern in patterns)
+
+
 def check_contract(problem: ProblemSpec, code: str, config: SearchConfig) -> EvidenceResult:
+    """AST check that the entry function exists with a callable, non-async signature."""
     entry_point = expected_entry_point(problem)
     try:
         tree = ast.parse(code)
@@ -40,12 +59,11 @@ def check_contract(problem: ProblemSpec, code: str, config: SearchConfig) -> Evi
 
     args = target.args
     required_args = len(args.args) - len(args.defaults)
-    vararg = args.vararg is not None
-    kwarg = args.kwarg is not None
+    is_async = isinstance(target, ast.AsyncFunctionDef)
     score = 1.0
-    if isinstance(target, ast.AsyncFunctionDef):
+    if is_async:
         score -= 0.25
-    if required_args > 4 and not vararg:
+    if required_args > 4 and args.vararg is None:
         score -= 0.15
     return EvidenceResult(
         name="contract",
@@ -57,8 +75,8 @@ def check_contract(problem: ProblemSpec, code: str, config: SearchConfig) -> Evi
             "entry_point": entry_point,
             "defined_functions": names,
             "required_args": required_args,
-            "has_vararg": vararg,
-            "has_kwarg": kwarg,
-            "is_async": isinstance(target, ast.AsyncFunctionDef),
+            "has_vararg": args.vararg is not None,
+            "has_kwarg": args.kwarg is not None,
+            "is_async": is_async,
         },
     )

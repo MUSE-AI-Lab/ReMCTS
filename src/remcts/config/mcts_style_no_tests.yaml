@@ -1,12 +1,13 @@
+# MCTS-style baseline (no_tests): pure-MCTS plus LLM semantic review; memory and semantic UCB disabled.
 search:
-  max_iterations: 4
-  branch_factor: 1
-  max_depth: 4
+  max_iterations: 8
+  branch_factor: 5
+  max_depth: 8
   exploration_c: 1.4
-  path_memory_k: 4
-  global_memory_top_t: 2
+  path_memory_k: 0
+  global_memory_top_t: 0
   success_threshold: 0.999
-  no_improve_patience: 3
+  no_improve_patience: 8
 
 evaluation:
   mode: production
@@ -22,8 +23,8 @@ reward:
   semantic_max_feedback_chars: 3000
 
 reflection:
-  mode: llm
-  max_feedback_chars: 3000
+  mode: heuristic
+  max_feedback_chars: 1200
   fallback_on_error: true
 
 production:
@@ -43,10 +44,14 @@ production:
   contract_confidence: 0.75
   static_confidence: 0.80
   meta_confidence: 0.35
+  complete_branch_before_accept: true
+  min_accept_iterations: 3
+  probe_llm_tests: false
+  probe_llm_count: 0
 
 semantic:
-  alpha: 0.4
-  beta: 0.6
+  alpha: 0.0
+  beta: 0.0
 
 sandbox:
   timeout_sec: 5
@@ -57,7 +62,8 @@ llm:
   base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
   api_key_env: REMCTS_API_KEY
   timeout_sec: 90
-  max_retries: 2
+  max_retries: 5
+  enable_thinking: false
   temperature: 0.2
   max_tokens: 1024
 

@@ -1,29 +1,26 @@
 from __future__ import annotations
 
-import subprocess
-import tempfile
-import json
 from json import dumps
+import json
+import os
 from pathlib import Path
+import subprocess
+import sys
+import tempfile
 
 from remcts.core.state import ExecutionResult
 
 from .safety import truncate_output
 
-
 RESULT_SENTINEL = "__REMCTS_RESULT__"
 
 
-def _estimate_total_tests(tests: str) -> int:
-    count = 0
-    for line in tests.splitlines():
-        stripped = line.strip()
-        if stripped.startswith("assert "):
-            count += 1
-    return count
+def count_asserts(tests: str) -> int:
+    return sum(1 for line in tests.splitlines() if line.strip().startswith("assert "))
 
 
-def _build_module_loader() -> list[str]:
+def _module_loader() -> list[str]:
+    """Import ``candidate.py`` as a module (so ``__main__`` blocks do not run) and expose its names."""
     return [
         "from pathlib import Path as __remcts_path",
         "import importlib.util as __remcts_importlib_util",
@@ -42,19 +39,16 @@ def _build_module_loader() -> list[str]:
     ]
 
 
-def _build_import_harness() -> str:
-    return "\n".join(_build_module_loader() + [""])
+def _assert_harness(tests: str) -> str | None:
+    """Run every top-level ``assert`` separately and report the pass count.
 
-
-def _build_assert_harness(tests: str) -> str | None:
-    total_tests = _estimate_total_tests(tests)
-    if total_tests <= 0:
+    Returns None for tests that cannot be split line by line (e.g. a HumanEval ``check`` function),
+    which then run as one script.
+    """
+    if count_asserts(tests) <= 0 or "def check(candidate)" in tests:
         return None
-    if "def check(candidate)" in tests:
-        return None
-
     lines = [
-        *_build_module_loader(),
+        *_module_loader(),
         "import json as __remcts_json",
         "__remcts_passed = 0",
         "__remcts_failed = []",
@@ -63,13 +57,11 @@ def _build_assert_harness(tests: str) -> str | None:
         stripped = line.strip()
         if not stripped:
             lines.append("")
-            continue
-        if stripped.startswith("#"):
+        elif stripped.startswith("#"):
             lines.append(line)
-            continue
-        if line[:1].isspace() and not stripped.startswith("assert "):
+        elif line[:1].isspace() and not stripped.startswith("assert "):
             return None
-        if stripped.startswith("assert "):
+        elif stripped.startswith("assert "):
             lines.extend(
                 [
                     "try:",
@@ -97,21 +89,33 @@ def _build_assert_harness(tests: str) -> str | None:
     return "\n".join(lines)
 
 
-def _extract_harness_result(stdout: str) -> tuple[int, list[str]] | None:
-    for line in reversed(stdout.splitlines()):
+def _script_harness(tests: str) -> str:
+    return "\n".join([*_module_loader(), "", tests, ""]) if tests else "\n".join([*_module_loader(), ""])
+
+
+def _parse_harness_output(stdout: str) -> tuple[str, tuple[int, list[str]] | None]:
+    """Split the harness result line from the candidate's own output."""
+    result = None
+    kept = []
+    for line in stdout.splitlines():
         if line.startswith(RESULT_SENTINEL):
-            payload = line[len(RESULT_SENTINEL) :]
-            data = json.loads(payload)
-            return int(data.get("passed", 0)), [str(item) for item in data.get("failed", [])]
-    return None
-
-
-def _strip_harness_result(stdout: str) -> str:
-    lines = [line for line in stdout.splitlines() if not line.startswith(RESULT_SENTINEL)]
-    return "\n".join(lines)
+            data = json.loads(line[len(RESULT_SENTINEL):])
+            result = int(data.get("passed", 0)), [str(item) for item in data.get("failed", [])]
+        else:
+            kept.append(line)
+    return "\n".join(kept), result
 
 
 class PythonExecutor:
+    """Runs a candidate and its tests in a fresh interpreter subprocess with a timeout.
+
+    This is process isolation only, not a security sandbox; run untrusted generations in a
+    container or VM.
+    """
+
+    def __init__(self, python: str | None = None):
+        self.python = python or sys.executable
+
     def run(
         self,
         code: str,
@@ -119,7 +123,7 @@ class PythonExecutor:
         timeout_sec: int = 3,
         max_output_chars: int = 4000,
     ) -> ExecutionResult:
-        total_tests = _estimate_total_tests(tests)
+        total_tests = count_asserts(tests)
         try:
             compile(code, "<candidate>", "exec")
         except SyntaxError as exc:
@@ -137,19 +141,20 @@ class PythonExecutor:
                 coverage_hint={},
             )
 
-        harness = _build_assert_harness(tests) if tests else None
-        combined = harness or (_build_import_harness() if not tests else _build_fallback_harness(tests))
+        runner_source = (_assert_harness(tests) if tests else None) or _script_harness(tests)
         with tempfile.TemporaryDirectory(prefix="remcts-") as tmpdir:
-            candidate = Path(tmpdir) / "candidate.py"
+            (Path(tmpdir) / "candidate.py").write_text(code, encoding="utf-8")
             runner = Path(tmpdir) / "runner.py"
-            candidate.write_text(code, encoding="utf-8")
-            runner.write_text(combined, encoding="utf-8")
+            runner.write_text(runner_source, encoding="utf-8")
             try:
                 result = subprocess.run(
-                    ["python3", str(runner)],
+                    [self.python, str(runner)],
                     cwd=tmpdir,
                     capture_output=True,
                     text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                    env={**os.environ, "PYTHONIOENCODING": "utf-8"},
                     timeout=timeout_sec,
                 )
             except subprocess.TimeoutExpired as exc:
@@ -166,17 +171,18 @@ class PythonExecutor:
                     coverage_hint={},
                 )
 
-        harness_result = _extract_harness_result(result.stdout)
-        stdout = truncate_output(_strip_harness_result(result.stdout), max_output_chars)
+        own_stdout, harness_result = _parse_harness_output(result.stdout)
+        stdout = truncate_output(own_stdout, max_output_chars)
         stderr = truncate_output(result.stderr, max_output_chars)
         exec_ok = result.returncode == 0
-        failed_cases = [] if exec_ok else ["execution_failed"]
         if harness_result is not None:
             passed_tests, failed_cases = harness_result
         else:
             passed_tests = total_tests if exec_ok else 0
-        traceback = stderr if not exec_ok else ""
-        if exec_ok and failed_cases:
+            failed_cases = [] if exec_ok else ["execution_failed"]
+        if not exec_ok:
+            traceback = stderr
+        else:
             traceback = "\n".join(failed_cases)
         return ExecutionResult(
             compile_ok=True,
@@ -190,14 +196,3 @@ class PythonExecutor:
             failed_cases=failed_cases,
             coverage_hint={"return_code": result.returncode},
         )
-
-
-def _build_fallback_harness(tests: str) -> str:
-    return "\n".join(
-        [
-            *_build_module_loader(),
-            "",
-            tests,
-            "",
-        ]
-    )
