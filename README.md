@@ -16,6 +16,8 @@
 <a href="pyproject.toml"><img src="https://img.shields.io/badge/Python-%E2%89%A53.10-3776ab?logo=python&logoColor=white" alt="Python"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-lightgrey" alt="License"></a>
 
+[English](README.md) · [简体中文](README_zh.md)
+
 </div>
 
 <p align="center"><img src="assets/overview.png" width="100%"><br><em>ReMCTS: selection, expansion, execution, reflection and backpropagation over a tree of candidate programs.</em></p>
