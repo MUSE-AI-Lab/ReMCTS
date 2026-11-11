@@ -13,6 +13,7 @@
 **EMNLP 2026**
 
 <a href="https://arxiv.org/abs/2609.34717"><img src="https://img.shields.io/badge/arXiv-2609.34717-b31b1b" alt="arXiv"></a>
+<a href="https://aclanthology.org/2026.findings-emnlp.293/"><img src="https://img.shields.io/badge/Paper-Findings%20of%20EMNLP%202026-blue" alt="Paper"></a>
 <a href="pyproject.toml"><img src="https://img.shields.io/badge/Python-%E2%89%A53.10-3776ab?logo=python&logoColor=white" alt="Python"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-lightgrey" alt="License"></a>
 
