@@ -1,6 +1,6 @@
 <div align="center">
 
-# ReMCTS: Reflection-Enhanced Monte Carlo Tree Search for Code Generation
+# ReMCTS: Reflect-Enhanced Monte Carlo Tree Search Strategy for Code Generation
 
 **Wang Huifei**<sup>1</sup> · **Huang Xinying**<sup>2</sup> · **Sun Yiheng**<sup>1</sup> · **Yifan Yuan**<sup>2&dagger;</sup>
 
@@ -181,13 +181,25 @@ tests/
 ## 📝 引用
 
 ```bibtex
-@inproceedings{wang2026remcts,
-  title         = {{ReMCTS}: Reflection-Enhanced Monte Carlo Tree Search for Code Generation},
-  author        = {Wang, Huifei and Huang, Xinying and Sun, Yiheng and Yuan, Yifan},
-  booktitle     = {Proceedings of the 2026 Conference on Empirical Methods in Natural Language Processing},
-  year          = {2026},
-  eprint        = {2609.34717},
-  archivePrefix = {arXiv}
+@inproceedings{huifei-etal-2026-remcts,
+    title = "{R}e{MCTS}: Reflect-Enhanced {M}onte {C}arlo Tree Search Strategy for Code Generation",
+    author = "Huifei, Wang  and
+      Xinying, Huang  and
+      Yiheng, Sun  and
+      Yuan, Yifan",
+    editor = "Lee, Hung-Yi  and
+      Dev, Sunipa  and
+      Li, Jessy  and
+      Elliott, Desmond",
+    booktitle = "Findings of the {A}ssociation for {C}omputational {L}inguistics: {EMNLP} 2026",
+    month = oct,
+    year = "2026",
+    address = "Budapest, Hungary",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2026.findings-emnlp.293/",
+    doi = "10.18653/2026.findings-emnlp.293",
+    pages = "6227--6247",
+    ISBN = "979-8-89176-462-0"
 }
 ```
 
